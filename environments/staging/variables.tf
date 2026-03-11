@@ -51,25 +51,81 @@ variable "subnet_newbits" {
   description = "Subnet newbits for CIDR calculation"
 }
 
-variable "private_subnet_indexes" {
-  type        = list(number)
-}
-
 variable "public_subnet_indexes" {
-  type        = list(number)
-}
-
-variable "observability_subnet_slice" {
   type = list(number)
 
   validation {
-    condition     = length(var.observability_subnet_slice) == 2
-    error_message = "observability_subnet_slice must have exactly 2 elements: [start, end]"
+    condition     = length(var.public_subnet_indexes) == 3
+    error_message = "public_subnet_indexes must contain exactly 3 indexes."
+  }
+}
+
+variable "k8s_subnet_indexes" {
+  type = list(number)
+
+  validation {
+    condition     = length(var.k8s_subnet_indexes) == 3
+    error_message = "k8s_subnet_indexes must contain exactly 3 indexes."
+  }
+}
+
+variable "observ_subnet_indexes" {
+  type = list(number)
+
+  validation {
+    condition     = length(var.observ_subnet_indexes) == 3
+    error_message = "observ_subnet_indexes must contain exactly 3 indexes."
   }
 }
 
 variable "openvpn_public_subnet_index" {
   type = number
+}
+
+variable "k0s_nodes" {
+  description = "Static placement plan for the staging k0s nodes"
+  type = map(object({
+    subnet_index = number
+    private_ip   = string
+  }))
+
+  validation {
+    condition = (
+      length(var.k0s_nodes) == 4 &&
+      alltrue([
+        for key in ["master", "worker1", "worker2", "worker3"] :
+        contains(keys(var.k0s_nodes), key)
+      ]) &&
+      alltrue([
+        for node in values(var.k0s_nodes) :
+        node.subnet_index >= 0 && node.subnet_index < 3
+      ])
+    )
+    error_message = "k0s_nodes must define master, worker1, worker2, worker3 and each subnet_index must be between 0 and 2."
+  }
+}
+
+variable "observability_nodes" {
+  description = "Static placement plan for staging observability and storage nodes"
+  type = map(object({
+    subnet_index = number
+    private_ip   = string
+  }))
+
+  validation {
+    condition = (
+      length(var.observability_nodes) == 2 &&
+      alltrue([
+        for key in ["obser_01", "obser_02"] :
+        contains(keys(var.observability_nodes), key)
+      ]) &&
+      alltrue([
+        for node in values(var.observability_nodes) :
+        node.subnet_index >= 0 && node.subnet_index < 3
+      ])
+    )
+    error_message = "observability_nodes must define obser_01 and obser_02 and each subnet_index must be between 0 and 2."
+  }
 }
 
 
@@ -108,4 +164,3 @@ variable "environment" {
   type        = string
   description = "Environment name (dev, staging, prod)"
 }
-

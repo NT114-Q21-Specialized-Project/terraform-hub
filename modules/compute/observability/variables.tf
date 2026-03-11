@@ -5,9 +5,13 @@ variable "key_name" {
   description = "SSH key name (from keypair module)"
 }
 
-variable "private_subnet_ids" {}
+variable "subnet_ids" {}
 variable "observability_sg_id" {}
 
-variable "instance_count" {
-  default = 2
+variable "nodes" {
+  description = "Static placement plan for observability and storage instances"
+  type = map(object({
+    subnet_index = number
+    private_ip   = string
+  }))
 }

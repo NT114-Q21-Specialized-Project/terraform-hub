@@ -8,6 +8,6 @@ resource "aws_instance" "this" {
   source_dest_check = false
 
   tags = {
-    Name = "openvpn"
+    Name = "openvpn_server"
   }
 }

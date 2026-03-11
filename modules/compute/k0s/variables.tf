@@ -5,9 +5,13 @@ variable "key_name" {
   description = "SSH key name (provided by keypair module)"
 }
 
-variable "private_subnet_ids" {}
+variable "subnet_ids" {}
 variable "k0s_sg_id" {}
 
-variable "worker_count" {
-  default = 2
+variable "nodes" {
+  description = "Static placement plan for all k0s nodes"
+  type = map(object({
+    subnet_index = number
+    private_ip   = string
+  }))
 }

@@ -2,7 +2,23 @@ variable "vpc_cidr" {}
 
 variable "azs" {}
 
-variable "private_subnets" {}
+variable "private_subnets" {
+  description = "Legacy combined private subnet list. Prefer grouped subnet lists for new environments."
+  type        = list(string)
+  default     = []
+}
+
+variable "k8s_private_subnets" {
+  description = "Dedicated private subnets for Kubernetes nodes"
+  type        = list(string)
+  default     = []
+}
+
+variable "observability_subnets" {
+  description = "Dedicated private subnets for observability and storage nodes"
+  type        = list(string)
+  default     = []
+}
 
 variable "public_subnets" {
   type = list(string)

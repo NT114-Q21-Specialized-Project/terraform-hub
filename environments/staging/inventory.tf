@@ -27,13 +27,13 @@ resource "local_file" "observability_inventory" {
 
   content = <<-EOF
 [monitoring]
-obser-1 ansible_host=${module.observability.instances[0].private_ip} ansible_user=ubuntu ansible_ssh_private_key_file=${abspath(var.ssh_key_path)}
+obser-1 ansible_host=${module.observability.nodes["obser_01"].private_ip} ansible_user=ubuntu ansible_ssh_private_key_file=${abspath(var.ssh_key_path)}
 
 [logging]
-obser-2 ansible_host=${module.observability.instances[1].private_ip} ansible_user=ubuntu ansible_ssh_private_key_file=${abspath(var.ssh_key_path)}
+obser-2 ansible_host=${module.observability.nodes["obser_02"].private_ip} ansible_user=ubuntu ansible_ssh_private_key_file=${abspath(var.ssh_key_path)}
 
 [all:vars]
-loki_host=${module.observability.instances[1].private_ip}
+loki_host=${module.observability.nodes["obser_02"].private_ip}
 EOF
 }
 

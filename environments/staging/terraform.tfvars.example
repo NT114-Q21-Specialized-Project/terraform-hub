@@ -13,12 +13,45 @@ az_count = 3
 
 subnet_newbits = 8
 
-private_subnet_indexes = [1, 2, 3, 4, 5]
-public_subnet_indexes  = [10, 11, 12]
-
-observability_subnet_slice = [3, 5]
+public_subnet_indexes = [1, 2, 3]
+k8s_subnet_indexes    = [11, 12, 13]
+observ_subnet_indexes = [21, 22, 23]
 
 openvpn_public_subnet_index = 2
+
+k0s_nodes = {
+  master = {
+    subnet_index = 0
+    private_ip   = "10.0.11.10"
+  }
+
+  worker1 = {
+    subnet_index = 0
+    private_ip   = "10.0.11.11"
+  }
+
+  worker2 = {
+    subnet_index = 1
+    private_ip   = "10.0.12.10"
+  }
+
+  worker3 = {
+    subnet_index = 2
+    private_ip   = "10.0.13.10"
+  }
+}
+
+observability_nodes = {
+  obser_01 = {
+    subnet_index = 0
+    private_ip   = "10.0.21.10"
+  }
+
+  obser_02 = {
+    subnet_index = 1
+    private_ip   = "10.0.22.10"
+  }
+}
 
 # =========================
 # Compute

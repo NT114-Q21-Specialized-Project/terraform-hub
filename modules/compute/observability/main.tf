@@ -1,12 +1,23 @@
-resource "aws_instance" "this" {
-  count                  = var.instance_count
+resource "aws_instance" "observability_node" {
+  for_each               = var.nodes
   ami                    = var.ami
   instance_type          = var.instance_type
-  subnet_id              = var.private_subnet_ids[count.index]
+  subnet_id              = var.subnet_ids[each.value.subnet_index]
+  private_ip             = each.value.private_ip
   key_name               = var.key_name
   vpc_security_group_ids = [var.observability_sg_id]
 
   tags = {
-    Name = "observability-${count.index + 1}"
+    Name = each.key
   }
+}
+
+moved {
+  from = aws_instance.observability_node["prometheus"]
+  to   = aws_instance.observability_node["obser_01"]
+}
+
+moved {
+  from = aws_instance.observability_node["loki"]
+  to   = aws_instance.observability_node["obser_02"]
 }

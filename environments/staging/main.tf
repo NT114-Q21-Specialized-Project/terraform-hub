@@ -44,14 +44,21 @@ locals {
     var.az_count
   )
 
-  # Private subnets (Kubernetes nodes, observability, internal services)
-  private_subnets = [
-    for i in var.private_subnet_indexes :
+  # Public ingress subnets
+  public_subnets = [
+    for i in var.public_subnet_indexes :
     cidrsubnet(var.vpc_cidr, var.subnet_newbits, i)
   ]
 
-  public_subnets = [
-    for i in var.public_subnet_indexes :
+  # Dedicated Kubernetes subnets
+  k8s_private_subnets = [
+    for i in var.k8s_subnet_indexes :
+    cidrsubnet(var.vpc_cidr, var.subnet_newbits, i)
+  ]
+
+  # Dedicated observability and storage subnets
+  observability_subnets = [
+    for i in var.observ_subnet_indexes :
     cidrsubnet(var.vpc_cidr, var.subnet_newbits, i)
   ]
 }
@@ -73,11 +80,12 @@ module "keypair" {
 # VPC, SUBNETS, ROUTING
 # =========================
 module "network" {
-  source          = "../../modules/network"
-  vpc_cidr        = var.vpc_cidr
-  azs             = local.azs
-  private_subnets = local.private_subnets
-  public_subnets  = local.public_subnets
+  source                = "../../modules/network"
+  vpc_cidr              = var.vpc_cidr
+  azs                   = local.azs
+  public_subnets        = local.public_subnets
+  k8s_private_subnets   = local.k8s_private_subnets
+  observability_subnets = local.observability_subnets
 }
 
 # =========================
@@ -98,11 +106,12 @@ module "security" {
 module "k0s" {
   source = "../../modules/compute/k0s"
 
-  ami                = data.aws_ami.ubuntu_2204.id
-  instance_type      = var.k0s_instance_type
-  key_name           = module.keypair.key_name
-  private_subnet_ids = module.network.private_subnet_ids
-  k0s_sg_id          = module.security.k0s_sg_id
+  ami           = data.aws_ami.ubuntu_2204.id
+  instance_type = var.k0s_instance_type
+  key_name      = module.keypair.key_name
+  subnet_ids    = module.network.k8s_private_subnet_ids
+  k0s_sg_id     = module.security.k0s_sg_id
+  nodes         = var.k0s_nodes
 }
 
 # =========================
@@ -115,15 +124,10 @@ module "observability" {
   ami           = data.aws_ami.ubuntu_2204.id
   instance_type = var.observability_instance_type
   key_name      = module.keypair.key_name
-
-  # Dedicated subnets for observability stack
-  private_subnet_ids = slice(
-    module.network.private_subnet_ids,
-    var.observability_subnet_slice[0],
-    var.observability_subnet_slice[1]
-  )
+  subnet_ids    = module.network.observability_subnet_ids
 
   observability_sg_id = module.security.observability_sg_id
+  nodes               = var.observability_nodes
 }
 
 # =========================
@@ -146,12 +150,12 @@ module "openvpn" {
 module "alb" {
   source = "../../modules/alb"
 
-  name = "${var.environment}-k0s-alb"
+  name       = "${var.environment}-k0s-alb"
   vpc_id     = module.network.vpc_id
   subnet_ids = module.network.public_subnet_ids
   alb_sg_id  = module.security.alb_sg_id
 
   target_type  = "instance"
-  target_port = var.alb_target_port
+  target_port  = var.alb_target_port
   instance_ids = module.k0s.instance_ids
 }

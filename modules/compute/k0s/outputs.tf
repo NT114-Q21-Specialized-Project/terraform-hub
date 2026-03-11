@@ -1,15 +1,26 @@
+locals {
+  worker_keys = sort([
+    for name in keys(aws_instance.k0s_node) :
+    name if name != "master"
+  ])
+}
+
+output "nodes" {
+  value = aws_instance.k0s_node
+}
+
 output "controller" {
-  value = aws_instance.controller
+  value = aws_instance.k0s_node["master"]
 }
 
 output "workers" {
-  value = aws_instance.workers
+  value = [for name in local.worker_keys : aws_instance.k0s_node[name]]
 }
 
 output "instance_ids" {
   description = "All k0s EC2 instance IDs (controller + workers)"
   value = concat(
-    [aws_instance.controller.id],
-    aws_instance.workers[*].id
+    [aws_instance.k0s_node["master"].id],
+    [for name in local.worker_keys : aws_instance.k0s_node[name].id]
   )
 }
